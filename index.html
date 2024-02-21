@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form with Bootstrap 5 and Plain JavaScript</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container mt-5">
+    <form id="myForm">
+      <div class="mb-3">
+        <label for="textInput" class="form-label">Text Input</label>
+        <textarea class="form-control" id="textInput" rows="3"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="fileInput" class="form-label">File Input</label>
+        <input type="file" accept="image/*,application/pdf" class="form-control" id="fileInput">
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS and Firebase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'
+
+    import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
+    import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js'
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlClVqcXYymbb_HyIVh1DSs84091EWXmw",
+      authDomain: "iot-notice-board-3a3f7.firebaseapp.com",
+      projectId: "iot-notice-board-3a3f7",
+      storageBucket: "iot-notice-board-3a3f7.appspot.com",
+      messagingSenderId: "931026070059",
+      appId: "1:931026070059:web:bfc2fb30dd71d51e42986e"
+    };
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    // Firestore instance
+    const db = getFirestore(app);
+
+    // JavaScript to handle form submission
+    document.getElementById('myForm').addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Retrieve form values
+      var textValue = document.getElementById('textInput').value;
+      var fileValue = document.getElementById('fileInput').files[0];
+
+      if (textValue.trim() !== "") {
+        // If text is submitted, update Firestore
+        setDoc(doc(db, "notice", "file"), {
+          type: "text",
+          text: textValue
+        }).then(function () {
+          alert("Text submitted successfully!");
+        }).catch(function (error) {
+          alert("Error submitting text: ", error);
+        });
+      }
+
+      if (fileValue) {
+        // If file is submitted, upload file to Firebase Storage
+        const storage = getStorage(app);
+        const storageRef = ref(storage, 'some-child');
+
+        const uploadTask = uploadBytes(storageRef, fileValue).then((snapshot) => {
+          getDownloadURL(snapshot.ref).then((downloadURL) => {
+            setDoc(doc(db, "notice", "file"), {
+              type: "file",
+              text: downloadURL
+            }).then(function () {
+              alert("uploaded succesfully!");
+            }).catch(function (error) {
+              alert("Error submitting text: ", error);
+            });
+          });
+        });
+      }
+
+      // Reset form fields
+      this.reset();
+    });
+  </script>
+</body>
+
+</html>
